@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {drawNames,seal,open} from './core.js';
+test('cada pessoa dá e recebe uma vez, sem tirar a si mesma',()=>{for(const size of [2,3,5,20,100])for(let run=0;run<30;run++){const people=Array.from({length:size},(_,i)=>({name:`Pessoa ${i}`,guardian:`Responsável ${i%3}`}));const result=drawNames(people);assert.equal(new Set(result.map(r=>r.target)).size,size);assert.ok(result.every(r=>r.name!==r.target));assert.deepEqual(result.map(r=>r.guardian),people.map(p=>p.guardian));}});
+test('rejeita lista insuficiente',()=>assert.throws(()=>drawNames([{name:'Ana'}])));
+test('link preserva acentos, funciona isolado e detecta alteração',async()=>{const payload={title:'Natal 🎁',guardian:'João',results:[{name:'Sofia',target:'Márcia'}]};const token=await seal(payload);assert.deepEqual(await open(token),payload);assert.ok(!token.includes('Sofia'));const parts=token.split('.');parts[3]=(parts[3][0]==='A'?'B':'A')+parts[3].slice(1);await assert.rejects(()=>open(parts.join('.')));await assert.rejects(()=>open('inválido'));});
+test('cada link contém somente os resultados de seu responsável',async()=>{const a={title:'Natal',guardian:'Pai',results:[{name:'Filho',target:'Tia'}]},b={title:'Natal',guardian:'Tia',results:[{name:'Tia',target:'Filho'}]};assert.deepEqual((await open(await seal(a))).results,a.results);assert.deepEqual((await open(await seal(b))).results,b.results);assert.notEqual(await seal(a),await seal(a));});
