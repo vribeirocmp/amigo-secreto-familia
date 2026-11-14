@@ -1,6 +1,20 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {drawNames,seal,open} from './core.js';
+import {drawNames,seal,open,budgetUSD} from './core.js';
+import {applyWishes} from './wishes.js';
+test('atualização mantém sorteio e USD, limita família e rejeita outro sorteio',async()=>{
+ const payload={title:'Natal',budget:'30.00',roundId:'round-1',familyId:'family-a',guardian:'Pai',results:[{name:'Filha',target:'Tia'}]};
+ const other={...payload,familyId:'family-b',guardian:'Tia',results:[{name:'Tia',target:'Filha'}]};
+ const state={roundId:'round-1',people:[{name:'Filha'},{name:'Tia'}],links:[{familyId:'family-a',token:await seal(payload)},{familyId:'family-b',token:await seal(other)}]};
+ const update={type:'wishes',roundId:'round-1',familyId:'family-a',entries:[{name:'Filha',wishes:'Livro e chocolate'}]};
+ const next=await applyWishes(state,await seal(update));
+ const a=await open(next.links[0].token),b=await open(next.links[1].token);
+ assert.equal(a.results[0].target,'Tia');assert.equal(a.budget,'30.00');assert.equal(b.results[0].target,'Filha');assert.equal(b.results[0].targetWishes,'Livro e chocolate');assert.equal(a.results[0].wishes,'Livro e chocolate');
+ await assert.rejects(async()=>applyWishes(state,await seal({...update,roundId:'outra'})));
+ await assert.rejects(async()=>applyWishes(state,await seal({...update,entries:[{name:'Tia',wishes:'Indevido'}]})));
+ assert.equal(state.people[0].wishes,undefined);
+});
+test('valor em USD aceita centavos e mantém compatibilidade com backups antigos',()=>{assert.equal(budgetUSD(undefined),'');assert.equal(budgetUSD('25.5'),'25.50');assert.equal(budgetUSD('10,99'),'10.99');assert.equal(budgetUSD('0'),'0.00');for(const invalid of ['abc',-1,'1.001',Infinity,1000001])assert.throws(()=>budgetUSD(invalid));});
 test('cada pessoa dá e recebe uma vez, sem tirar a si mesma',()=>{for(const size of [2,3,5,20,100])for(let run=0;run<30;run++){const people=Array.from({length:size},(_,i)=>({name:`Pessoa ${i}`,guardian:`Responsável ${i%3}`}));const result=drawNames(people);assert.equal(new Set(result.map(r=>r.target)).size,size);assert.ok(result.every(r=>r.name!==r.target));assert.deepEqual(result.map(r=>r.guardian),people.map(p=>p.guardian));}});
 test('rejeita lista insuficiente',()=>assert.throws(()=>drawNames([{name:'Ana'}])));
 test('link preserva acentos, funciona isolado e detecta alteração',async()=>{const payload={title:'Natal 🎁',guardian:'João',results:[{name:'Sofia',target:'Márcia'}]};const token=await seal(payload);assert.deepEqual(await open(token),payload);assert.ok(!token.includes('Sofia'));const parts=token.split('.');parts[3]=(parts[3][0]==='A'?'B':'A')+parts[3].slice(1);await assert.rejects(()=>open(parts.join('.')));await assert.rejects(()=>open('inválido'));});
