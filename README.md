@@ -12,7 +12,7 @@ Nos novos links, cada participante tem uma caixa de desejos (até 500 caracteres
 
 ## Dados e acesso
 
-Os dados do organizador ficam somente no localStorage daquele navegador. Use a cópia de segurança para restaurar em outro dispositivo. Não envie a cópia aos participantes: ela contém todos os links. Nenhum participante real ou resultado é gravado neste repositório.
+Os dados do organizador ficam somente no localStorage daquele navegador. Use a cópia de segurança para restaurar em outro dispositivo. O botão Salvar cópia de segurança abre opções para baixar o arquivo, compartilhar o arquivo em celulares compatíveis ou copiar o texto. A opção Restaurar uma cópia em texto aceita o conteúdo copiado. Salvar e restaurar uma cópia preserva os links e o sorteio. Não envie a cópia aos participantes: ela contém todos os links. Nenhum participante real ou resultado é gravado neste repositório.
 
 Cada link carrega exclusivamente os resultados do responsável, usando AES-GCM e chave aleatória no fragmento da URL. O fragmento não é enviado ao GitHub pelo navegador. Quem possui o link pode ler seus resultados, inclusive o organizador. A criptografia não serve como autenticação: a chave está no próprio link. Não há expiração ou revogação; apagar ou refazer uma brincadeira não invalida links antigos. Compartilhe somente com o destinatário. Não há analytics nem dependências externas de execução.
 
